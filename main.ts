@@ -1,87 +1,179 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {
+	App,
+	Plugin,
+	Setting,
+	PluginSettingTab,
+	requestUrl,
+	Notice
+} from 'obsidian';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface H1ObsidianPluginSettings {
+	h1Username: string;
+	h1Token: string;
+	directory: string;
 }
+const DEFAULT_SETTINGS: H1ObsidianPluginSettings = {
+	h1Username: '',
+	h1Token: '',
+	directory: 'Bug Bounty'
+};
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+
+export class H1ObsidianPluginSettingTab extends PluginSettingTab {
+	plugin: H1ObsidianPlugin;
+
+	constructor(app: App, plugin: H1ObsidianPlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+
+	}
+
+	display(): void {
+		const {
+			containerEl
+		} = this;
+
+		containerEl.empty();
+
+		containerEl.createEl('h2', {
+			text: 'HackerOne Plugin Settings'
+		});
+
+		new Setting(containerEl)
+			.setName('HackerOne Username')
+			.setDesc('Enter your HackerOne username')
+			.addText((text) =>
+				text
+				.setPlaceholder('Enter your username...')
+				.setValue(this.plugin.settings.h1Username)
+				.onChange(async (value) => {
+					this.plugin.settings.h1Username = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName('HackerOne Token')
+			.setDesc('Enter your HackerOne API token')
+			.addText((text) =>
+				text
+				.setPlaceholder('Enter your token...')
+				.setValue(this.plugin.settings.h1Token)
+				.onChange(async (value) => {
+					this.plugin.settings.h1Token = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+			new Setting(containerEl)
+			.setName('path')
+			.setDesc('Enter the path of the bug bounty folder')
+			.addText((text) =>
+				text
+				.setPlaceholder('./Bug Bounty')
+				.setValue(this.plugin.settings.directory)
+				.onChange(async (value) => {
+					this.plugin.settings.directory = value;
+					await this.plugin.saveSettings();
+				})
+			);
+	}
 }
-
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
-
+const contentBugSummaryAlltime =  "# Bugs \n\
+```dataview\n\
+TABLE program,state,bounty,severity,URL,created_at\n\
+WHERE Type=\"bug-bounty-vuln\"\n\
+SORT DateReported DESC\n\
+```\n\
+# Total \n\
+```dataview\n\
+TABLE sum(rows.bounty) as TotalBounty\n\
+WHERE Type=\"bug-bounty-vuln\" \n\
+Where bounty > 0\n\
+GROUP BY TotalBounty\n\
+```\n\
+# Best Programs\n\
+```dataview\n\
+TABLE  sum(rows.bounty) as TotalBounty\n\
+WHERE type=\"bug-bounty-vuln\"and bounty > 0\n\
+GROUP BY program\n\
+SORT sum(rows.bounty) DESC\n\
+``` \n\
+\n\
+"
+const conttentBugSummary2023 =  "# Bugs\n\
+```dataview\n\
+TABLE program,state,bounty,severity,URL,created_at\n\
+WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"2023\")\n\
+SORT DateReported DESC\n\
+```\n\
+# Total 2023\n\
+```dataview\n\
+TABLE sum(rows.bounty) as TotalBounty\n\
+WHERE Type=\"bug-bounty-vuln\" \n\
+Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\"2023\") \n\
+GROUP BY TotalBounty\n\
+```\n\
+# Best Programs 2023\n\
+```dataview\n\
+TABLE  sum(rows.bounty) as TotalBounty\n\
+WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"2023\")  and bounty > 0\n\
+GROUP BY program\n\
+SORT sum(rows.bounty) DESC\n\
+``` \n\
+\n\
+"
+export default class H1ObsidianPlugin extends Plugin {
+	settings: H1ObsidianPluginSettings;
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		try {
+			this.app.vault.createFolder(`${this.settings.directory}/Bugs`);
+		} catch (error) {
+			console.log("Error folder bug directory creation:",console.log(error))
+		}
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		this.addSettingTab(new H1ObsidianPluginSettingTab(this.app, this));
 
-		// This adds a simple command that can be triggered anywhere
+;
+		try {
+			await this.app.vault.create(`${this.settings.directory}/bugs-summary-all-time.md`, contentBugSummaryAlltime);
+		} catch (error) {
+			console.log('Error creating summary file:', error);
+		}
+		try {
+			await this.app.vault.create(`${this.settings.directory}/bugs-summary-2023.md`, conttentBugSummary2023);
+		} catch (error) {
+			console.log('Error creating summary file:', error);
+		}
+
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
+			id: 'fetch-h1-reports',
+			name: 'fetch HackerOne Reports',
+			callback: () => this.fetchH1Reports(),
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
-
-	onunload() {
 
 	}
 
+	async overwriteFile(fileName : string, fileContent: string) {
+		// Check if the file exists
+		let file = this.app.vault.getAbstractFileByPath(fileName);
+	
+		if (file) {
+		  // If the file exists, delete it
+		  await this.app.vault.delete(file);
+		}
+	
+		try {
+		  // Create a new file with the same name
+		  const newFile = await this.app.vault.create(fileName, fileContent);
+		} catch (err) {
+		  new Notice('Error: Unable to overwrite the file.');
+		  console.error('Error overwriting file:', err);
+		}
+	  }
+	
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -89,49 +181,155 @@ export default class MyPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-}
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
+	async fetchH1Reports() {
+		if (this.settings.h1Username == ''){
+			new Notice("You need to fill your hackerone username in the settings of the plugin")
+			console.log("You need to fill your hackerone username in the settings of the plugin");
+			return
+		}
+		if (this.settings.h1Token == ''){
+			new Notice("You need to fill your hackerone API Token in the settings of the plugin")
+			console.log("You need to fill your hackerone API Token in the settings of the plugin")
+			return 
+		}
+		new Notice("fetching your HackerOne Reports...")
+		try {
+			const h1Reports = await this.getH1Reports();
+			const h1Earnings = await this.getH1Earnings();
+			// Create a folder for the reports if it doesn't exist
+			await this.createNotes(h1Reports, h1Earnings)
+
+
+		} catch (error) {
+			console.log(error);
+			new Notice('Error fetching HackerOne reports: ' + error.message);
+		}
 	}
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
+	async createNotes(h1Reports: [], earnings: []) {
+
+		const vault = this.app.vault;
+		const folderPath = `${this.settings.directory}/Bugs`;
+		for (const item of h1Reports) {
+			try {
+				var severity = item.relationships.severity.data.attributes.rating
+			} catch (error) {
+				severity = "undefined"
+			}
+			try {
+				var program = item.relationships.program.data.attributes.handle
+			} catch (error) {
+				program = "undefined"
+			}
+			const noteContent = '---\nType: bug-bounty-vuln\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\nn' + item.attributes.vulnerability_information;
+			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_-]/gi, '_')}-${item.id}.md`
+			console.log(`Create bugs ${item.attributes.title}.`)
+			await this.overwriteFile(fileName, noteContent);
+		}
+		new Notice('Bugs has been updated successfully.');
+	
 	}
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+	async getBountyReport(reportId, earnings) {
+		let ret = 0;
+
+		for (const earning of earnings) {
+			if (earning.type === 'earning-bounty-earned') {
+				if (
+					earning.relationships.bounty.data.relationships.report.data.id ===
+					reportId
+				) {
+					ret += parseInt(earning.attributes.amount);
+
+					if (earning.attributes.bonus_amount !== undefined) {
+						ret += parseInt(earning.attributes.bonus_amount);
+					}
+				}
+			} else if (earning.type === 'earning-retest-completed') {
+				if (
+					earning.relationships.report_retest_user.data.relationships.report_retest.data.relationships.report.data.id ===
+					reportId
+				) {
+					ret += 50;
+				}
+			} else {
+				console.log(earning.type);
+			}
+		}
+
+		return ret;
 	}
-}
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	async serializeAttributes(attributes: []) {
+		let yamlString = '';
 
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
+		for (const key in attributes) {
+			if (key != "vulnerability_information") {
+				yamlString += `${key}: ${attributes[key]}\n`;
+			}
+		}
+
+		return yamlString;
 	}
 
-	display(): void {
-		const {containerEl} = this;
 
-		containerEl.empty();
+	async getH1Reports() {
+		// fetch reports from the HackerOne API
+		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		let page = 0;
+		let h1ReportsRet = [];
+		
+		while (true) {
+			page += 1;
+			const response = await requestUrl({
+				url: `https://api.hackerone.com/v1/hackers/me/reports?page[size]=100&page[number]=${page}`,
+				method: "GET",
+				headers: {
 
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
+					Authorization: `Basic ${authString}`,
+					Accept: 'application/json',
+				}
+			});
+			if (response.status != 200) {
+				console.log("Error fetching hackerone api");
+				new Notice("Error fetching hackerone api");
+
+			}
+			if (response.json.data.length == 0) {
+				return h1ReportsRet
+			}
+			h1ReportsRet = h1ReportsRet.concat(response.json.data)
+		}
+	}
+
+	async getH1Earnings() {
+		// fetch reports from the HackerOne API
+		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
+
+		let page = 0;
+		let earnings = [];
+
+		while (true) {
+			page += 1;
+			const response = await requestUrl({
+				url: `https://api.hackerone.com/v1/hackers/payments/earnings?page[size]=100&page[number]=${page}`,
+				method: "GET",
+				headers: {
+
+					Authorization: `Basic ${authString}`,
+					Accept: 'application/json',
+				}
+			});
+			if (response.status != 200) {
+				console.log("Error fetching hackerone api");
+
+			}
+			if (response.json.data.length == 0) {
+				return earnings
+			}
+			earnings = earnings.concat(response.json.data)
+		}
 	}
 }
