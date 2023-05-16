@@ -1,6 +1,6 @@
 {
 	"id": "hackerone",
-	"name": "HackerOne Plugin",
+	"name": "HackerOne",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "This is a HackerOne plugin to fetch your bug reports inside Obsidian.",
