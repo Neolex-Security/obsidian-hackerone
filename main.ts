@@ -193,7 +193,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			console.log("You need to fill your hackerone API Token in the settings of the plugin")
 			return 
 		}
-		new Notice("fetching your HackerOne")
+		new Notice("fetching your HackerOne reports...")
 		try {
 			const h1Reports = await this.getH1Reports();
 			const h1Earnings = await this.getH1Earnings();
