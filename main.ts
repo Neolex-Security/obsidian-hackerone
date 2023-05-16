@@ -193,7 +193,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			console.log("You need to fill your hackerone API Token in the settings of the plugin")
 			return 
 		}
-		new Notice("fetching your HackerOne Reports...")
+		new Notice("fetching your HackerOne")
 		try {
 			const h1Reports = await this.getH1Reports();
 			const h1Earnings = await this.getH1Earnings();
@@ -207,7 +207,7 @@ export default class H1ObsidianPlugin extends Plugin {
 		}
 	}
 
-	async createNotes(h1Reports: [], earnings: []) {
+	async createNotes(h1Reports: any[], earnings: any[]) {
 
 		const vault = this.app.vault;
 		const folderPath = `${this.settings.directory}/Bugs`;
@@ -231,7 +231,7 @@ export default class H1ObsidianPlugin extends Plugin {
 	
 	}
 
-	async getBountyReport(reportId, earnings) {
+	async getBountyReport(reportId: number, earnings: any[]) {
 		let ret = 0;
 
 		for (const earning of earnings) {
@@ -274,12 +274,12 @@ export default class H1ObsidianPlugin extends Plugin {
 	}
 
 
-	async getH1Reports() {
+	async getH1Reports() : Promise<any[]>  {
 		// fetch reports from the HackerOne API
 		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
 
 		let page = 0;
-		let h1ReportsRet = [];
+		let h1ReportsRet : any[] = [];
 		
 		while (true) {
 			page += 1;
@@ -304,12 +304,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		}
 	}
 
-	async getH1Earnings() {
+	async getH1Earnings() :  Promise<any[]>{
 		// fetch reports from the HackerOne API
 		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
 
 		let page = 0;
-		let earnings = [];
+		let earnings : any[] = [];
 
 		while (true) {
 			page += 1;
