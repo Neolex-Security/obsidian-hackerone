@@ -83,7 +83,7 @@ const contentBugSummaryAlltime =  "# Bugs \n\
 ```dataview\n\
 TABLE program,state,bounty,severity,URL,created_at\n\
 WHERE Type=\"bug-bounty-vuln\"\n\
-SORT DateReported DESC\n\
+SORT created_at DESC\n\
 ```\n\
 # Total \n\
 ```dataview\n\
@@ -105,7 +105,7 @@ const conttentBugSummary2023 =  "# Bugs\n\
 ```dataview\n\
 TABLE program,state,bounty,severity,URL,created_at\n\
 WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"2023\")\n\
-SORT DateReported DESC\n\
+SORT created_at DESC\n\
 ```\n\
 # Total 2023\n\
 ```dataview\n\
