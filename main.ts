@@ -101,23 +101,26 @@ SORT sum(rows.bounty) DESC\n\
 ``` \n\
 \n\
 "
-const conttentBugSummary2023 =  "# Bugs\n\
+
+const contentBugSummaryCurrentYear =  "# <% tp.date.now('YYYY') %> bug reports\n\
+\n\
+# Bugs\n\
 ```dataview\n\
 TABLE program,state,bounty,severity,URL,created_at\n\
-WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"2023\")\n\
+WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"<% tp.date.now('YYYY') %>\")\n\
 SORT created_at DESC\n\
 ```\n\
-# Total 2023\n\
+# Total \n\
 ```dataview\n\
 TABLE sum(rows.bounty) as TotalBounty\n\
 WHERE Type=\"bug-bounty-vuln\" \n\
-Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\"2023\") \n\
+Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\"\") \n\
 GROUP BY TotalBounty\n\
 ```\n\
-# Best Programs 2023\n\
+# Best Programs \n\
 ```dataview\n\
 TABLE  sum(rows.bounty) as TotalBounty\n\
-WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"2023\")  and bounty > 0\n\
+WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"\")  and bounty > 0\n\
 GROUP BY program\n\
 SORT sum(rows.bounty) DESC\n\
 ``` \n\
@@ -143,7 +146,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			console.log('Error creating summary file:', error);
 		}
 		try {
-			await this.app.vault.create(`${this.settings.directory}/bugs-summary-2023.md`, conttentBugSummary2023);
+			await this.app.vault.create(`${this.settings.directory}/bugs-summary-current-year.md`, contentBugSummaryCurrentYear);
 		} catch (error) {
 			console.log('Error creating summary file:', error);
 		}
