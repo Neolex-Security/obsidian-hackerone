@@ -3,9 +3,8 @@
 	"name": "HackerOne",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a HackerOne plugin to fetch your bug reports inside Obsidian.",
+	"description": "Fetch your bug reports from HackerOneinside Obsidian.",
 	"author": "Neolex",
 	"authorUrl": "https://blog.neolex.dev",
-	"fundingUrl": "",
 	"isDesktopOnly": false
 }
