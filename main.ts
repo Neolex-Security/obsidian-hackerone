@@ -102,25 +102,25 @@ SORT sum(rows.bounty) DESC\n\
 \n\
 "
 
-const contentBugSummaryCurrentYear =  "# <% tp.date.now('YYYY') %> bug reports\n\
+const contentBugSummaryCurrentYear =  "# "+new Date().getFullYear()+" bug reports\n\
 \n\
 # Bugs\n\
 ```dataview\n\
 TABLE program,state,bounty,severity,URL,created_at\n\
-WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"<% tp.date.now('YYYY') %>\")\n\
+WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+new Date().getFullYear()+"\")\n\
 SORT created_at DESC\n\
 ```\n\
 # Total \n\
 ```dataview\n\
 TABLE sum(rows.bounty) as TotalBounty\n\
 WHERE Type=\"bug-bounty-vuln\" \n\
-Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\"\") \n\
+Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\""+new Date().getFullYear()+"\") \n\
 GROUP BY TotalBounty\n\
 ```\n\
 # Best Programs \n\
 ```dataview\n\
 TABLE  sum(rows.bounty) as TotalBounty\n\
-WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\"\")  and bounty > 0\n\
+WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+new Date().getFullYear()+"\")  and bounty > 0\n\
 GROUP BY program\n\
 SORT sum(rows.bounty) DESC\n\
 ``` \n\
