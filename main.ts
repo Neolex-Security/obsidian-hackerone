@@ -225,7 +225,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			} catch (error) {
 				program = "undefined"
 			}
-			const noteContent = '---\nType: bug-bounty-vuln\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\nn' + item.attributes.vulnerability_information;
+			const noteContent = '---\nType: bug-bounty-vuln\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information;
 			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_-]/gi, '_')}-${item.id}.md`
 			console.log(`Create bugs ${item.attributes.title}.`)
 			await this.overwriteFile(fileName, noteContent);
