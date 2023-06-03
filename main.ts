@@ -44,12 +44,12 @@ export class H1ObsidianPluginSettingTab extends PluginSettingTab {
 			.setDesc('Enter your HackerOne username')
 			.addText((text) =>
 				text
-				.setPlaceholder('Enter your username...')
-				.setValue(this.plugin.settings.h1Username)
-				.onChange(async (value) => {
-					this.plugin.settings.h1Username = value;
-					await this.plugin.saveSettings();
-				})
+					.setPlaceholder('Enter your username...')
+					.setValue(this.plugin.settings.h1Username)
+					.onChange(async (value) => {
+						this.plugin.settings.h1Username = value;
+						await this.plugin.saveSettings();
+					})
 			);
 
 		new Setting(containerEl)
@@ -57,29 +57,29 @@ export class H1ObsidianPluginSettingTab extends PluginSettingTab {
 			.setDesc('Enter your HackerOne API token')
 			.addText((text) =>
 				text
-				.setPlaceholder('Enter your token...')
-				.setValue(this.plugin.settings.h1Token)
-				.onChange(async (value) => {
-					this.plugin.settings.h1Token = value;
-					await this.plugin.saveSettings();
-				})
+					.setPlaceholder('Enter your token...')
+					.setValue(this.plugin.settings.h1Token)
+					.onChange(async (value) => {
+						this.plugin.settings.h1Token = value;
+						await this.plugin.saveSettings();
+					})
 			);
 
-			new Setting(containerEl)
+		new Setting(containerEl)
 			.setName('path')
 			.setDesc('Enter the path of the bug bounty folder')
 			.addText((text) =>
 				text
-				.setPlaceholder('./Bug Bounty')
-				.setValue(this.plugin.settings.directory)
-				.onChange(async (value) => {
-					this.plugin.settings.directory = value;
-					await this.plugin.saveSettings();
-				})
+					.setPlaceholder('./Bug Bounty')
+					.setValue(this.plugin.settings.directory)
+					.onChange(async (value) => {
+						this.plugin.settings.directory = value;
+						await this.plugin.saveSettings();
+					})
 			);
 	}
 }
-const contentBugSummaryAlltime =  "# Bugs \n\
+const contentBugSummaryAlltime = "# Bugs \n\
 ```dataview\n\
 TABLE program,state,bounty,severity,URL,created_at\n\
 WHERE Type=\"bug-bounty-vuln\"\n\
@@ -102,25 +102,25 @@ SORT sum(rows.bounty) DESC\n\
 \n\
 "
 
-const contentBugSummaryCurrentYear =  "# "+new Date().getFullYear()+" bug reports\n\
+const contentBugSummaryCurrentYear = "# " + new Date().getFullYear() + " bug reports\n\
 \n\
 # Bugs\n\
 ```dataview\n\
 TABLE program,state,bounty,severity,URL,created_at\n\
-WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+new Date().getFullYear()+"\")\n\
+WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+ new Date().getFullYear() + "\")\n\
 SORT created_at DESC\n\
 ```\n\
 # Total \n\
 ```dataview\n\
 TABLE sum(rows.bounty) as TotalBounty\n\
 WHERE Type=\"bug-bounty-vuln\" \n\
-Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\""+new Date().getFullYear()+"\") \n\
+Where bounty > 0 and contains(dateformat(bounty_awarded_at,\"yyyy\"),\""+ new Date().getFullYear() + "\") \n\
 GROUP BY TotalBounty\n\
 ```\n\
 # Best Programs \n\
 ```dataview\n\
 TABLE  sum(rows.bounty) as TotalBounty\n\
-WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+new Date().getFullYear()+"\")  and bounty > 0\n\
+WHERE type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+ new Date().getFullYear() + "\")  and bounty > 0\n\
 GROUP BY program\n\
 SORT sum(rows.bounty) DESC\n\
 ``` \n\
@@ -134,12 +134,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		try {
 			this.app.vault.createFolder(`${this.settings.directory}/Bugs`);
 		} catch (error) {
-			console.log("Error folder bug directory creation:",console.log(error))
+			console.log("Error folder bug directory creation:", console.log(error))
 		}
 
 		this.addSettingTab(new H1ObsidianPluginSettingTab(this.app, this));
 
-;
+		;
 		try {
 			await this.app.vault.create(`${this.settings.directory}/bugs-summary-all-time.md`, contentBugSummaryAlltime);
 		} catch (error) {
@@ -159,24 +159,24 @@ export default class H1ObsidianPlugin extends Plugin {
 
 	}
 
-	async overwriteFile(fileName : string, fileContent: string) {
+	async overwriteFile(fileName: string, fileContent: string) {
 		// Check if the file exists
 		let file = this.app.vault.getAbstractFileByPath(fileName);
-	
+
 		if (file) {
-		  // If the file exists, delete it
-		  await this.app.vault.delete(file);
+			// If the file exists, delete it
+			await this.app.vault.delete(file);
 		}
-	
+
 		try {
-		  // Create a new file with the same name
-		  const newFile = await this.app.vault.create(fileName, fileContent);
+			// Create a new file with the same name
+			const newFile = await this.app.vault.create(fileName, fileContent);
 		} catch (err) {
-		  new Notice('Error: Unable to overwrite the file.');
-		  console.error('Error overwriting file:', err);
+			new Notice('Error: Unable to overwrite the file.');
+			console.error('Error overwriting file:', err);
 		}
-	  }
-	
+	}
+
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -186,15 +186,15 @@ export default class H1ObsidianPlugin extends Plugin {
 	}
 
 	async fetchH1Reports() {
-		if (this.settings.h1Username == ''){
+		if (this.settings.h1Username == '') {
 			new Notice("You need to fill your hackerone username in the settings of the plugin")
 			console.log("You need to fill your hackerone username in the settings of the plugin");
 			return
 		}
-		if (this.settings.h1Token == ''){
+		if (this.settings.h1Token == '') {
 			new Notice("You need to fill your hackerone API Token in the settings of the plugin")
 			console.log("You need to fill your hackerone API Token in the settings of the plugin")
-			return 
+			return
 		}
 		new Notice("fetching your HackerOne reports...")
 		try {
@@ -225,13 +225,14 @@ export default class H1ObsidianPlugin extends Plugin {
 			} catch (error) {
 				program = "undefined"
 			}
-			const noteContent = '---\nType: bug-bounty-vuln\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information;
+			const noteContent = '---\nType: bug-bounty-vuln\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
+
 			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_-]/gi, '_')}-${item.id}.md`
 			console.log(`Create bugs ${item.attributes.title}.`)
 			await this.overwriteFile(fileName, noteContent);
 		}
 		new Notice('Bugs has been updated successfully.');
-	
+
 	}
 
 	async getBountyReport(reportId: number, earnings: any[]) {
@@ -277,13 +278,13 @@ export default class H1ObsidianPlugin extends Plugin {
 	}
 
 
-	async getH1Reports() : Promise<any[]>  {
+	async getH1Reports(): Promise<any[]> {
 		// fetch reports from the HackerOne API
 		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
 
 		let page = 0;
-		let h1ReportsRet : any[] = [];
-		
+		let h1ReportsRet: any[] = [];
+
 		while (true) {
 			page += 1;
 			const response = await requestUrl({
@@ -307,12 +308,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		}
 	}
 
-	async getH1Earnings() :  Promise<any[]>{
+	async getH1Earnings(): Promise<any[]> {
 		// fetch reports from the HackerOne API
 		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
 
 		let page = 0;
-		let earnings : any[] = [];
+		let earnings: any[] = [];
 
 		while (true) {
 			page += 1;
