@@ -81,7 +81,7 @@ export class H1ObsidianPluginSettingTab extends PluginSettingTab {
 }
 const contentBugSummaryAlltime = "# Bugs \n\
 ```dataview\n\
-TABLE program,state,bounty,severity,URL,created_at\n\
+TABLE program,state,bounty,severity,url,created_at\n\
 WHERE Type=\"bug-bounty-vuln\"\n\
 SORT created_at DESC\n\
 ```\n\
@@ -106,7 +106,7 @@ const contentBugSummaryCurrentYear = "# " + new Date().getFullYear() + " bug rep
 \n\
 # Bugs\n\
 ```dataview\n\
-TABLE program,state,bounty,severity,URL,created_at\n\
+TABLE program,state,bounty,severity,url,created_at\n\
 WHERE Type=\"bug-bounty-vuln\" and contains(dateformat(created_at,\"yyyy\"),\""+ new Date().getFullYear() + "\")\n\
 SORT created_at DESC\n\
 ```\n\
@@ -131,15 +131,9 @@ export default class H1ObsidianPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		try {
-			this.app.vault.createFolder(`${this.settings.directory}/Bugs`);
-		} catch (error) {
-			console.log("Error folder bug directory creation:", console.log(error))
-		}
 
 		this.addSettingTab(new H1ObsidianPluginSettingTab(this.app, this));
 
-		;
 		try {
 			await this.app.vault.create(`${this.settings.directory}/bugs-summary-all-time.md`, contentBugSummaryAlltime);
 		} catch (error) {
@@ -213,7 +207,13 @@ export default class H1ObsidianPlugin extends Plugin {
 	async createNotes(h1Reports: any[], earnings: any[]) {
 
 		const vault = this.app.vault;
+		
 		const folderPath = `${this.settings.directory}/Bugs`;
+		try {
+			await this.app.vault.createFolder(folderPath);
+		} catch (exception) {
+			console.log("bugs folder exist");
+		}	
 		for (const item of h1Reports) {
 			try {
 				var severity = item.relationships.severity.data.attributes.rating
@@ -225,7 +225,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			} catch (error) {
 				program = "undefined"
 			}
-			const noteContent = '---\nType: bug-bounty-vuln\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
+			const noteContent = '---\nType: bug-bounty-vuln\n' + 'url: https://hackerone.com/reports/'+item.id +'\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
 
 			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_-]/gi, '_')}-${item.id}.md`
 			console.log(`Create bugs ${item.attributes.title}.`)
