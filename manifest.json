@@ -1,7 +1,7 @@
 {
 	"id": "hackerone",
 	"name": "HackerOne",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
 	"description": "Fetch your bug reports from HackerOne.",
 	"author": "Neolex",

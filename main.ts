@@ -137,12 +137,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		try {
 			await this.app.vault.create(`${this.settings.directory}/bugs-summary-all-time.md`, contentBugSummaryAlltime);
 		} catch (error) {
-			console.log('Error creating summary file:', error);
+			new Notice('Error creating summary file:', error);
 		}
 		try {
 			await this.app.vault.create(`${this.settings.directory}/bugs-summary-current-year.md`, contentBugSummaryCurrentYear);
 		} catch (error) {
-			console.log('Error creating summary file:', error);
+			new Notice('Error creating summary file:', error);
 		}
 
 		this.addCommand({
@@ -166,8 +166,8 @@ export default class H1ObsidianPlugin extends Plugin {
 			// Create a new file with the same name
 			const newFile = await this.app.vault.create(fileName, fileContent);
 		} catch (err) {
-			new Notice('Error: Unable to overwrite the file.');
-			console.error('Error overwriting file:', err);
+			new Notice('Error: Unable to overwrite the file:'+err);
+			console.log('Error overwriting file:', err);
 		}
 	}
 
@@ -182,25 +182,26 @@ export default class H1ObsidianPlugin extends Plugin {
 	async fetchH1Reports() {
 		if (this.settings.h1Username == '') {
 			new Notice("You need to fill your hackerone username in the settings of the plugin")
-			console.log("You need to fill your hackerone username in the settings of the plugin");
 			return
 		}
 		if (this.settings.h1Token == '') {
 			new Notice("You need to fill your hackerone API Token in the settings of the plugin")
-			console.log("You need to fill your hackerone API Token in the settings of the plugin")
 			return
 		}
-		new Notice("fetching your HackerOne reports...")
+		let h1Earnings = []
+		let h1Reports = []
+		new Notice("Fetching your HackerOne reports...")
 		try {
-			const h1Reports = await this.getH1Reports();
-			const h1Earnings = await this.getH1Earnings();
-			// Create a folder for the reports if it doesn't exist
-			await this.createNotes(h1Reports, h1Earnings)
-
-
+			h1Reports = await this.getH1Reports();
+			h1Earnings = await this.getH1Earnings();
 		} catch (error) {
-			console.log(error);
 			new Notice('Error fetching HackerOne reports: ' + error.message);
+		}
+		try{
+			// Create a folder for the reports if it does	n't exist
+			await this.createNotes(h1Reports, h1Earnings)
+		}catch(error){
+			new Notice('Error creating notes: ' + error.message);
 		}
 	}
 
@@ -209,11 +210,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		const vault = this.app.vault;
 		
 		const folderPath = `${this.settings.directory}/Bugs`;
-		try {
-			await this.app.vault.createFolder(folderPath);
-		} catch (exception) {
-			console.log("bugs folder exist");
-		}	
+		try{
+			await vault.createFolder(folderPath);
+		}catch(error){
+			console.log('Error creating folder: ' + error.message);
+		}
+		
 		for (const item of h1Reports) {
 			try {
 				var severity = item.relationships.severity.data.attributes.rating
@@ -225,9 +227,12 @@ export default class H1ObsidianPlugin extends Plugin {
 			} catch (error) {
 				program = "undefined"
 			}
-			const noteContent = '---\nType: bug-bounty-vuln\n' + 'url: https://hackerone.com/reports/'+item.id +'\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
+			const specialChars = /([\'\[\]\/])/g;
+			const title = item.attributes.title.replace(":","").replace(specialChars, '\\$1')
+			const noteContent = '---\nType: bug-bounty-vuln\ntitle: '+ title + '\nurl: https://hackerone.com/reports/'+item.id +'\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
 
-			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_-]/gi, '_')}-${item.id}.md`
+			
+			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_ -]/gi, '_')}-${item.id}.md`
 			console.log(`Create bugs ${item.attributes.title}.`)
 			await this.overwriteFile(fileName, noteContent);
 		}
@@ -258,25 +263,26 @@ export default class H1ObsidianPlugin extends Plugin {
 					ret += 50;
 				}
 			} else {
-				console.log(earning.type);
+				new Notice(earning.type);
 			}
 		}
 
 		return ret;
 	}
 
-	async serializeAttributes(attributes: []) {
-		let yamlString = '';
+	
 
+	async serializeAttributes(attributes: any[]) {
+		let yamlString = '';
 		for (const key in attributes) {
-			if (key != "vulnerability_information") {
-				yamlString += `${key}: ${attributes[key]}\n`;
+			if (key != "vulnerability_information" && key != "title") {
+				let content = attributes[key]
+				yamlString += `${key}: ${content}\n`;
 			}
 		}
 
 		return yamlString;
 	}
-
 
 	async getH1Reports(): Promise<any[]> {
 		// fetch reports from the HackerOne API
@@ -297,7 +303,7 @@ export default class H1ObsidianPlugin extends Plugin {
 				}
 			});
 			if (response.status != 200) {
-				console.log("Error fetching hackerone api");
+				new Notice("Error fetching hackerone api");
 				new Notice("Error fetching hackerone api");
 
 			}
@@ -327,7 +333,7 @@ export default class H1ObsidianPlugin extends Plugin {
 				}
 			});
 			if (response.status != 200) {
-				console.log("Error fetching hackerone api");
+				new Notice("Error fetching hackerone api");
 
 			}
 			if (response.json.data.length == 0) {
