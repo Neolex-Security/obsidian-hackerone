@@ -132,12 +132,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		this.addSettingTab(new H1ObsidianPluginSettingTab(this.app, this));
 
 		try {
-			await this.app.vault.create(`${this.settings.directory}/bugs-summary-all-time.md`, contentBugSummaryAlltime);
+			await this.app.vault.create(normalizePath(`${this.settings.directory}/bugs-summary-all-time.md`), contentBugSummaryAlltime);
 		} catch (error) {
 			new Notice('Error creating summary file:', error);
 		}
 		try {
-			await this.app.vault.create(`${this.settings.directory}/bugs-summary-current-year.md`, contentBugSummaryCurrentYear);
+			await this.app.vault.create(normalizePath(`${this.settings.directory}/bugs-summary-current-year.md`), contentBugSummaryCurrentYear);
 		} catch (error) {
 			new Notice('Error creating summary file:', error);
 		}
