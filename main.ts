@@ -144,7 +144,7 @@ export default class H1ObsidianPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'fetch-h1-reports',
-			name: 'fetch HackerOne Reports',
+			name: 'Fetch hackerone reports',
 			callback: () => this.fetchH1Reports(),
 		});
 
