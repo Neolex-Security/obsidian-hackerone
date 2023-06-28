@@ -215,21 +215,21 @@ export default class H1ObsidianPlugin extends Plugin {
 		
 		for (const item of h1Reports) {
 			try {
-				var severity = item.relationships.severity.data.attributes.rating
+				let severity = item.relationships.severity.data.attributes.rating
 			} catch (error) {
-				severity = "undefined"
+				let severity = "undefined"
 			}
 			try {
-				var program = item.relationships.program.data.attributes.handle
+				let program = item.relationships.program.data.attributes.handle
 			} catch (error) {
-				program = "undefined"
+				let program = "undefined"
 			}
 			const specialChars = /([\'\[\]\/])/g;
 			const title = item.attributes.title.replace(":","").replace(specialChars, '\\$1')
 			const noteContent = '---\nType: bug-bounty-vuln\ntitle: '+ title + '\nurl: https://hackerone.com/reports/'+item.id +'\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
 
 			
-			var fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_ -]/gi, '_')}-${item.id}.md`
+			let fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_ -]/gi, '_')}-${item.id}.md`
 			console.log(`Create bugs ${item.attributes.title}.`)
 			await this.overwriteFile(fileName, noteContent);
 		}
