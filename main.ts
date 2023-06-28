@@ -4,7 +4,8 @@ import {
 	Setting,
 	PluginSettingTab,
 	requestUrl,
-	Notice
+	Notice,
+	normalizePath
 } from 'obsidian';
 
 interface H1ObsidianPluginSettings {
@@ -34,10 +35,6 @@ export class H1ObsidianPluginSettingTab extends PluginSettingTab {
 		} = this;
 
 		containerEl.empty();
-
-		containerEl.createEl('h2', {
-			text: 'HackerOne Plugin Settings'
-		});
 
 		new Setting(containerEl)
 			.setName('HackerOne Username')
@@ -209,7 +206,7 @@ export default class H1ObsidianPlugin extends Plugin {
 
 		const vault = this.app.vault;
 		
-		const folderPath = `${this.settings.directory}/Bugs`;
+		const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
 		try{
 			await vault.createFolder(folderPath);
 		}catch(error){
