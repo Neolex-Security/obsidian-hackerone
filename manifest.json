@@ -3,7 +3,7 @@
 	"name": "HackerOne",
 	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
-	"description": "Fetch your bug reports from HackerOne.",
+	"description": "Unofficial plugin to fetch your bug reports from HackerOne.",
 	"author": "Neolex",
 	"authorUrl": "https://blog.neolex.dev",
 	"isDesktopOnly": false
