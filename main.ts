@@ -142,6 +142,11 @@ export default class H1ObsidianPlugin extends Plugin {
 			new Notice('Error creating summary file:', error);
 		}
 
+
+		this.registerInterval(
+			window.setInterval(() => this.fetchH1Reports(), 15*60*1000)
+		  );
+	
 		this.addCommand({
 			id: 'fetch-h1-reports',
 			name: 'Fetch hackerone reports',
@@ -212,17 +217,17 @@ export default class H1ObsidianPlugin extends Plugin {
 		}catch(error){
 			console.log('Error creating folder: ' + error.message);
 		}
-		
+		let severity = "undefined"
 		for (const item of h1Reports) {
 			try {
-				let severity = item.relationships.severity.data.attributes.rating
+				severity = item.relationships.severity.data.attributes.rating
 			} catch (error) {
-				let severity = "undefined"
 			}
+			let program = "undefined"
 			try {
-				let program = item.relationships.program.data.attributes.handle
+				program = item.relationships.program.data.attributes.handle
 			} catch (error) {
-				let program = "undefined"
+			
 			}
 			const specialChars = /([\'\[\]\/])/g;
 			const title = item.attributes.title.replace(":","").replace(specialChars, '\\$1')
