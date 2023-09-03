@@ -215,7 +215,7 @@ export default class H1ObsidianPlugin extends Plugin {
 		try{
 			await vault.createFolder(folderPath);
 		}catch(error){
-			console.log('Error creating folder: ' + error.message);
+			
 		}
 		let severity = "undefined"
 		for (const item of h1Reports) {
