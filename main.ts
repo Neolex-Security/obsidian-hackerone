@@ -127,8 +127,7 @@ export default class H1ObsidianPlugin extends Plugin {
 	settings: H1ObsidianPluginSettings;
 	async onload() {
 		await this.loadSettings();
-
-
+		
 		this.addSettingTab(new H1ObsidianPluginSettingTab(this.app, this));
 
 		try {
@@ -142,11 +141,10 @@ export default class H1ObsidianPlugin extends Plugin {
 			new Notice('Error creating summary file:', error);
 		}
 
-
 		this.registerInterval(
-			window.setInterval(() => this.fetchH1Reports(), 15*60*1000)
-		  );
-	
+			window.setInterval(() => this.fetchH1Reports(), 10*60*1000)
+		);
+		
 		this.addCommand({
 			id: 'fetch-h1-reports',
 			name: 'Fetch hackerone reports',
@@ -235,7 +233,6 @@ export default class H1ObsidianPlugin extends Plugin {
 
 			
 			let fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_ -]/gi, '_')}-${item.id}.md`
-			console.log(`Create bugs ${item.attributes.title}.`)
 			await this.overwriteFile(fileName, noteContent);
 		}
 		new Notice('Bugs has been updated successfully.');
