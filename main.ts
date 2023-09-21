@@ -7,6 +7,7 @@ import {
 	Notice,
 	normalizePath
 } from 'obsidian';
+import { emitWarning } from 'process';
 
 interface H1ObsidianPluginSettings {
 	h1Username: string;
@@ -180,6 +181,7 @@ export default class H1ObsidianPlugin extends Plugin {
 	}
 
 	async fetchH1Reports() {
+		console.log("fetch hackerone reports...")
 		if (this.settings.h1Username == '') {
 			new Notice("You need to fill your hackerone username in the settings of the plugin")
 			return
@@ -241,7 +243,6 @@ export default class H1ObsidianPlugin extends Plugin {
 
 	async getBountyReport(reportId: number, earnings: any[]) {
 		let ret = 0;
-
 		for (const earning of earnings) {
 			if (earning.type === 'earning-bounty-earned') {
 				if (
@@ -265,7 +266,6 @@ export default class H1ObsidianPlugin extends Plugin {
 				new Notice(earning.type);
 			}
 		}
-
 		return ret;
 	}
 
@@ -323,7 +323,7 @@ export default class H1ObsidianPlugin extends Plugin {
 		while (true) {
 			page += 1;
 			const response = await requestUrl({
-				url: `https://api.hackerone.com/v1/hackers/payments/earnings?page[size]=100&page[number]=${page}`,
+				url: `https://api.hackerone.com/v1/hackers/payments/earnings?page%5Bsize%5D=100&page%5Bnumber%5D=${page}`,
 				method: "GET",
 				headers: {
 
@@ -335,10 +335,8 @@ export default class H1ObsidianPlugin extends Plugin {
 				new Notice("Error fetching hackerone api");
 
 			}
-			if (response.json.data.length == 0) {
-				return earnings
-			}
 			earnings = earnings.concat(response.json.data)
 		}
+		return earnings
 	}
 }
