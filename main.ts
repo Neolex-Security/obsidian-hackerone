@@ -5,9 +5,17 @@ import {
 	PluginSettingTab,
 	requestUrl,
 	Notice,
+	TFile,
 	normalizePath
 } from 'obsidian';
 import { emitWarning } from 'process';
+
+interface ReportNote {
+	id: string;
+	content: string;
+	filename: string;
+}
+
 
 interface H1ObsidianPluginSettings {
 	h1Username: string;
@@ -154,18 +162,21 @@ export default class H1ObsidianPlugin extends Plugin {
 
 	}
 
-	async overwriteFile(fileName: string, fileContent: string) {
-		// Check if the file exists
-		let file = this.app.vault.getAbstractFileByPath(fileName);
-
-		if (file) {
-			// If the file exists, delete it
-			await this.app.vault.delete(file);
-		}
-
+	async overwriteFiles(reportNotes: Array<ReportNote>) {
 		try {
-			// Create a new file with the same name
-			const newFile = await this.app.vault.create(fileName, fileContent);
+			const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
+			let existingReportFiles = this.app.vault.getMarkdownFiles()
+			existingReportFiles = existingReportFiles.filter(file => file.path.startsWith(folderPath));
+			for (const reportNote of reportNotes) {
+				const foundExistingReport = existingReportFiles.find((reportFile: TFile) => reportFile.basename.split("-").pop() === reportNote.id);
+				if(foundExistingReport){
+					await this.app.vault.modify(foundExistingReport, reportNote["content"]);
+				
+				}else{
+					console.log("report "+reportNote["id"]+" not found create "+reportNote["filename"])
+					await this.app.vault.create(reportNote["filename"],reportNote["content"])
+				}		
+			}
 		} catch (err) {
 			new Notice('Error: Unable to overwrite the file:'+err);
 			console.log('Error overwriting file:', err);
@@ -208,7 +219,7 @@ export default class H1ObsidianPlugin extends Plugin {
 	}
 
 	async createNotes(h1Reports: any[], earnings: any[]) {
-
+		var reportNotes: ReportNote[] = [];
 		const vault = this.app.vault;
 		
 		const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
@@ -235,9 +246,15 @@ export default class H1ObsidianPlugin extends Plugin {
 
 			
 			let fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_ -]/gi, '_')}-${item.id}.md`
-			await this.overwriteFile(fileName, noteContent);
+			const newReportNote: ReportNote = {
+				id: item.id,
+				content: noteContent,
+				filename: fileName
+			};
+			reportNotes.push(newReportNote);
+			
 		}
-		new Notice('Bugs has been updated successfully.');
+		await this.overwriteFiles(reportNotes);
 
 	}
 
@@ -284,6 +301,7 @@ export default class H1ObsidianPlugin extends Plugin {
 	}
 
 	async getH1Reports(): Promise<any[]> {
+		console.log("fetch reports...")
 		// fetch reports from the HackerOne API
 		const authString = btoa(`${this.settings.h1Username}:${this.settings.h1Token}`);
 
@@ -309,6 +327,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			if (response.json.data.length == 0) {
 				return h1ReportsRet
 			}
+			
 			h1ReportsRet = h1ReportsRet.concat(response.json.data)
 		}
 	}
@@ -334,6 +353,9 @@ export default class H1ObsidianPlugin extends Plugin {
 			if (response.status != 200) {
 				new Notice("Error fetching hackerone api");
 
+			}
+			if (response.json.data.length == 0) {
+				return earnings
 			}
 			earnings = earnings.concat(response.json.data)
 		}
