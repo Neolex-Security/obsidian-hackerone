@@ -162,27 +162,6 @@ export default class H1ObsidianPlugin extends Plugin {
 
 	}
 
-	async overwriteFiles(reportNotes: Array<ReportNote>) {
-		try {
-			const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
-			let existingReportFiles = this.app.vault.getMarkdownFiles()
-			existingReportFiles = existingReportFiles.filter(file => file.path.startsWith(folderPath));
-			for (const reportNote of reportNotes) {
-				const foundExistingReport = existingReportFiles.find((reportFile: TFile) => reportFile.basename.split("-").pop() === reportNote.id);
-				if(foundExistingReport){
-					await this.app.vault.modify(foundExistingReport, reportNote["content"]);
-				
-				}else{
-					console.log("report "+reportNote["id"]+" not found create "+reportNote["filename"])
-					await this.app.vault.create(reportNote["filename"],reportNote["content"])
-				}		
-			}
-		} catch (err) {
-			new Notice('Error: Unable to overwrite the file:'+err);
-			console.log('Error overwriting file:', err);
-		}
-	}
-
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -249,13 +228,37 @@ export default class H1ObsidianPlugin extends Plugin {
 			const newReportNote: ReportNote = {
 				id: item.id,
 				content: noteContent,
-				filename: fileName
+				filename: fileName,
 			};
 			reportNotes.push(newReportNote);
 			
 		}
 		await this.overwriteFiles(reportNotes);
 
+	}
+
+	async overwriteFiles(reportNotes: Array<ReportNote>) {
+		try {
+			const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
+			let existingReportFiles = this.app.vault.getMarkdownFiles()
+			existingReportFiles = existingReportFiles.filter(file => file.path.startsWith(folderPath));
+			for (const reportNote of reportNotes) {
+				const foundExistingReport = existingReportFiles.find((reportFile: TFile) => reportFile.basename.split("-").pop() === reportNote.id);
+				if(foundExistingReport){
+					let currentContent = await this.app.vault.cachedRead(foundExistingReport);
+					if(currentContent!=reportNote["content"]){
+						await this.app.vault.modify(foundExistingReport, reportNote["content"]);
+					}
+				
+				}else{
+					console.log("report "+reportNote["id"]+" not found create "+reportNote["filename"])
+					await this.app.vault.create(reportNote["filename"],reportNote["content"])
+				}		
+			}
+		} catch (err) {
+			new Notice('Error: Unable to overwrite the file:'+err);
+			console.log('Error overwriting file:', err);
+		}
 	}
 
 	async getBountyReport(reportId: number, earnings: any[]) {
