@@ -134,19 +134,36 @@ SORT sum(rows.bounty) DESC\n\
 "
 export default class H1ObsidianPlugin extends Plugin {
 	settings: H1ObsidianPluginSettings;
+
+
+	oninstall() {
+		console.log("H1ObsidianPlugin installed");
+	}
+
+
+	
 	async onload() {
 		await this.loadSettings();
 		
 		this.addSettingTab(new H1ObsidianPluginSettingTab(this.app, this));
 
 		try {
+			await this.app.vault.createFolder(normalizePath(this.settings.directory))
+		}catch(error){
+			console.log(error);
+			new Notice('Error creating folder:', error);
+		}
+
+		try {
 			await this.app.vault.create(normalizePath(`${this.settings.directory}/bugs-summary-all-time.md`), contentBugSummaryAlltime);
 		} catch (error) {
+			console.log(error)
 			new Notice('Error creating summary file:', error);
 		}
 		try {
 			await this.app.vault.create(normalizePath(`${this.settings.directory}/bugs-summary-current-year.md`), contentBugSummaryCurrentYear);
 		} catch (error) {
+			console.log(error)
 			new Notice('Error creating summary file:', error);
 		}
 
@@ -159,6 +176,8 @@ export default class H1ObsidianPlugin extends Plugin {
 			name: 'Fetch hackerone reports',
 			callback: () => this.fetchH1Reports(),
 		});
+
+		await this.fetchH1Reports();
 
 	}
 

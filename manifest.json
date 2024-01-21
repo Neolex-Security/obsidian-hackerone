@@ -1,9 +1,9 @@
 {
 	"id": "hackerone",
 	"name": "HackerOne",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"minAppVersion": "0.15.0",
-	"description": "Unofficial plugin to fetch your bug reports from HackerOne.",
+	"description": "Unofficial plugin to fetch your bug reports from HackerOne. (needs dataview plugin)",
 	"author": "Neolex",
 	"authorUrl": "https://blog.neolex.dev",
 	"isDesktopOnly": false
