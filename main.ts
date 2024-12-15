@@ -177,8 +177,6 @@ export default class H1ObsidianPlugin extends Plugin {
 			callback: () => this.fetchH1Reports(),
 		});
 
-		await this.fetchH1Reports();
-
 	}
 
 	async loadSettings() {
