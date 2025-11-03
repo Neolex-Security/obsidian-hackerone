@@ -1,12 +1,13 @@
 import {
-	App,
-	Plugin,
-	Setting,
-	PluginSettingTab,
-	requestUrl,
-	Notice,
-	TFile,
-	normalizePath
+    App,
+    Plugin,
+    Setting,
+    PluginSettingTab,
+    requestUrl,
+    Notice,
+    TFile,
+    TFolder,
+    normalizePath
 } from 'obsidian';
 import { emitWarning } from 'process';
 
@@ -71,18 +72,28 @@ export class H1ObsidianPluginSettingTab extends PluginSettingTab {
 					})
 			);
 
-		new Setting(containerEl)
-			.setName('path')
-			.setDesc('Enter the path of the bug bounty folder')
-			.addText((text) =>
-				text
-					.setPlaceholder('./Bug Bounty')
-					.setValue(this.plugin.settings.directory)
-					.onChange(async (value) => {
-						this.plugin.settings.directory = value;
-						await this.plugin.saveSettings();
-					})
-			);
+        // Directory input with autocomplete for existing vault folders
+        const allFolders = this.app.vault.getAllLoadedFiles()
+            .filter((f) => f instanceof TFolder) as TFolder[];
+        const listId = 'h1-directory-datalist';
+        const datalist = containerEl.createEl('datalist', { attr: { id: listId } });
+        for (const folder of allFolders) {
+            const option = datalist.createEl('option');
+            option.value = folder.path;
+        }
+        new Setting(containerEl)
+            .setName('Directory')
+            .setDesc('Type a path; autocomplete suggests existing folders')
+            .addText((text) => {
+                text
+                    .setPlaceholder('Bug Bounty')
+                    .setValue(this.plugin.settings.directory)
+                    .onChange(async (value) => {
+                        this.plugin.settings.directory = value;
+                        await this.plugin.saveSettings();
+                    });
+                (text.inputEl as HTMLInputElement).setAttr('list', listId);
+            });
 	}
 }
 const contentBugSummaryAlltime = "# Bugs \n\
@@ -218,11 +229,14 @@ export default class H1ObsidianPlugin extends Plugin {
 		var reportNotes: ReportNote[] = [];
 		const vault = this.app.vault;
 		
-		const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
+		const folderPath = normalizePath(`${this.settings.directory}/reports`);
 		try{
 			await vault.createFolder(folderPath);
 		}catch(error){
-			
+		// If folder already exists (error.code is 'EEXIST'), ignore; otherwise, show alert
+		if (error && error.code !== 'EEXIST') {
+			new Notice('Error creating folder for reports: ' + (error.message || error));
+		}
 		}
 		let severity = "undefined"
 		for (const item of h1Reports) {
