@@ -161,21 +161,27 @@ export default class H1ObsidianPlugin extends Plugin {
 		try {
 			await this.app.vault.createFolder(normalizePath(this.settings.directory))
 		}catch(error){
-			console.log(error);
-			new Notice('Error creating folder:', error);
+			if (error.message !== 'Folder already exists.') {
+				console.log(error);
+				new Notice('Error creating folder for reports: ' + (error.code || error.message || error));
+			}
 		}
 
 		try {
 			await this.app.vault.create(normalizePath(`${this.settings.directory}/bugs-summary-all-time.md`), contentBugSummaryAlltime);
 		} catch (error) {
-			console.log(error)
-			new Notice('Error creating summary file:', error);
+			if (error.message !== 'File already exists.') {
+				console.log(error);
+				new Notice('Error creating folder for reports: ' + (error.code || error.message || error));
+			}
 		}
 		try {
 			await this.app.vault.create(normalizePath(`${this.settings.directory}/bugs-summary-current-year.md`), contentBugSummaryCurrentYear);
 		} catch (error) {
-			console.log(error)
-			new Notice('Error creating summary file:', error);
+			if (error.message !== 'File already exists.') {
+				console.log(error);
+				new Notice('Error creating summary file: ' + (error.code || error.message || error));
+			}
 		}
 
 		this.registerInterval(
@@ -197,6 +203,7 @@ export default class H1ObsidianPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+
 
 	async fetchH1Reports() {
 		console.log("fetch hackerone reports...")
@@ -233,11 +240,12 @@ export default class H1ObsidianPlugin extends Plugin {
 		try{
 			await vault.createFolder(folderPath);
 		}catch(error){
-		// If folder already exists (error.code is 'EEXIST'), ignore; otherwise, show alert
-		if (error && error.code !== 'EEXIST') {
-			new Notice('Error creating folder for reports: ' + (error.message || error));
+			if (error.message !== 'Folder already exists.') {
+				console.log(error.message);
+				new Notice('Error creating folder for reports: ' + (error.code || error.message || error));
+			}
 		}
-		}
+		
 		let severity = "undefined"
 		for (const item of h1Reports) {
 			try {
@@ -270,11 +278,11 @@ export default class H1ObsidianPlugin extends Plugin {
 
 	async overwriteFiles(reportNotes: Array<ReportNote>) {
 		try {
-			const folderPath = normalizePath(`${this.settings.directory}/Bugs`);
+			const folderPath = normalizePath(`${this.settings.directory}/reports`);
 			let existingReportFiles = this.app.vault.getMarkdownFiles()
 			existingReportFiles = existingReportFiles.filter(file => file.path.startsWith(folderPath));
 			for (const reportNote of reportNotes) {
-				const foundExistingReport = existingReportFiles.find((reportFile: TFile) => reportFile.basename.split("-").pop() === reportNote.id);
+				const foundExistingReport = existingReportFiles.find((reportFile: TFile) => reportFile.basename.split("-").pop() === `${reportNote.id}`);
 				if(foundExistingReport){
 					let currentContent = await this.app.vault.cachedRead(foundExistingReport);
 					if(currentContent!=reportNote["content"]){
@@ -354,7 +362,6 @@ export default class H1ObsidianPlugin extends Plugin {
 				}
 			});
 			if (response.status != 200) {
-				new Notice("Error fetching hackerone api");
 				new Notice("Error fetching hackerone api");
 
 			}
