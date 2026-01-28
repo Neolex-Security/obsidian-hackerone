@@ -260,7 +260,7 @@ export default class H1ObsidianPlugin extends Plugin {
 			}
 			const specialChars = /([\'\[\]\/])/g;
 			const title = item.attributes.title.replace(":","").replace(specialChars, '\\$1')
-			const noteContent = '---\nType: bug-bounty-vuln\ntitle: '+ title + '\nurl: https://hackerone.com/reports/'+item.id +'\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\n---\n' + item.attributes.vulnerability_information.replace("<%", "<");
+			const noteContent = '---\nType: bug-bounty-vuln\ntitle: '+ title + '\nurl: https://hackerone.com/reports/'+item.id +'\n' + await this.serializeAttributes(item.attributes) + 'bounty: ' + await this.getBountyReport(item.id, earnings) + '\nseverity: ' + severity + '\nprogram: ' + program + '\nplatform: HackerOne---\n' + item.attributes.vulnerability_information.replace("<%", "<");
 
 			
 			let fileName = `${folderPath}/${item.attributes.title.replace(/[^a-z0-9_ -]/gi, '_')}-${item.id}.md`
